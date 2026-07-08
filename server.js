@@ -83,7 +83,10 @@ app.post('/api/contact', async (req, res) => {
     auth: {
       user: smtpUser,
       pass: smtpPass
-    }
+    },
+    connectionTimeout: 5000, // 5 seconds
+    greetingTimeout: 5000,
+    socketTimeout: 5000
   });
 
   // 1. Beautiful Cyber HTML layout for Admin Email (to Virag)
