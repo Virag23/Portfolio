@@ -75,7 +75,7 @@ export default function CommandPalette({ onGlitchTrigger }) {
       case '/resume':
         response.push({ text: 'Initiating download of Virag_Nandgaonkar.pdf...', type: 'success' });
         const link = document.createElement('a');
-        link.href = '/Virag_Nandgaonkar.pdf';
+        link.href = `${import.meta.env.BASE_URL}Virag_Nandgaonkar.pdf`;
         link.download = 'Virag_Nandgaonkar.pdf';
         document.body.appendChild(link);
         link.click();

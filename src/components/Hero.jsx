@@ -130,7 +130,7 @@ export default function Hero({ onSummonShell }) {
 
             <div className="absolute inset-4 rounded-full overflow-hidden border-2 border-cyber-purple/50 bg-cyber-dark/80 shadow-neon-purple flex items-center justify-center">
               <img
-                src="/Virag.png"
+                src={`${import.meta.env.BASE_URL}Virag.png`}
                 alt="Virag Nandgaonkar"
                 className="w-full h-full object-cover grayscale contrast-[1.1] hover:grayscale-0 transition-all duration-700 hover:scale-105"
                 onError={(e) => {

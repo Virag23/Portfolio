@@ -151,7 +151,7 @@ export default function Contact() {
 
             {/* Direct Resume Download Button Card */}
             <a
-              href="/Virag_Nandgaonkar.pdf"
+              href={`${import.meta.env.BASE_URL}Virag_Nandgaonkar.pdf`}
               download="Virag_Nandgaonkar.pdf"
               className="cyber-glass p-6 rounded-lg w-full flex items-center justify-between border-t-2 border-t-cyber-cyan hover:border-cyber-pink group transition-all"
             >
