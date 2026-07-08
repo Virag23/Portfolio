@@ -64,32 +64,7 @@ app.post('/api/contact', async (req, res) => {
     return res.status(400).json({ error: 'All transmission parameters (name, email, message) are required.' });
   }
 
-  // Setup Nodemailer Transporter
-  const smtpHost = process.env.SMTP_HOST;
-  const smtpPort = process.env.SMTP_PORT || 587;
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-  const receiverEmail = process.env.RECEIVER_EMAIL || 'viragsjain1975@gmail.com';
-
-  if (!smtpHost || !smtpUser || !smtpPass) {
-    console.error('SMTP Credentials missing from server environment.');
-    return res.status(500).json({ error: 'Server mailer setup not fully configured.' });
-  }
-
-  const transporter = nodemailer.createTransport({
-    host: smtpHost,
-    port: parseInt(smtpPort),
-    secure: smtpPort === '465', // true for 465, false for other ports
-    auth: {
-      user: smtpUser,
-      pass: smtpPass
-    },
-    connectionTimeout: 5000, // 5 seconds
-    greetingTimeout: 5000,
-    socketTimeout: 5000
-  });
-
-  // 1. Beautiful Cyber HTML layout for Admin Email (to Virag)
+  // Define HTML templates for both transport methods
   const adminHtml = `
     <!DOCTYPE html>
     <html>
@@ -134,7 +109,6 @@ app.post('/api/contact', async (req, res) => {
     </html>
   `;
 
-  // 2. Beautiful Cyber HTML layout for Client Email (Thank-you confirmation to sender)
   const clientHtml = `
     <!DOCTYPE html>
     <html>
@@ -175,29 +149,116 @@ app.post('/api/contact', async (req, res) => {
     </html>
   `;
 
-  try {
-    // Send email to Virag (Notification)
-    await transporter.sendMail({
-      from: `"${name} (Portfolio)" <${smtpUser}>`,
-      to: receiverEmail,
-      replyTo: email,
-      subject: `📧 Portfolio Message from ${name}`,
-      html: adminHtml
+  const resendApiKey = process.env.RESEND_API_KEY;
+  const receiverEmail = process.env.RECEIVER_EMAIL || 'viragsjain1975@gmail.com';
+
+  if (resendApiKey) {
+    // ----------------------------------------------------
+    // Method A: Resend HTTP API (Bypasses SMTP port blocks, runs on Render Free)
+    // ----------------------------------------------------
+    try {
+      console.log('[API SERVER] Sending email notification via Resend HTTP API...');
+      
+      const adminResponse = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: 'Portfolio Contact <onboarding@resend.dev>',
+          to: [receiverEmail],
+          reply_to: email,
+          subject: `📧 Portfolio Message from ${name}`,
+          html: adminHtml
+        })
+      });
+
+      const adminData = await adminResponse.json();
+      if (!adminResponse.ok) {
+        throw new Error(`Resend notification failed: ${JSON.stringify(adminData)}`);
+      }
+
+      // Try client auto-responder (may fail on Resend free tier if domain is not verified, but should not crash the form)
+      try {
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: 'Virag Nandgaonkar <onboarding@resend.dev>',
+            to: [email],
+            subject: `✔ Connection Acknowledged - Virag Nandgaonkar`,
+            html: clientHtml
+          })
+        });
+      } catch (clientErr) {
+        console.warn('Resend auto-responder skipped/failed (requires custom domain verification):', clientErr.message);
+      }
+
+      console.log(`[API SERVER] Resend transmission successful for: ${email}`);
+      return res.json({ success: true, message: 'Message sent successfully!' });
+    } catch (error) {
+      console.error('[API SERVER] Resend API error:', error);
+      return res.status(500).json({ error: 'Mail transmission link failed. Please check server logs.' });
+    }
+  } else {
+    // ----------------------------------------------------
+    // Method B: Nodemailer SMTP (Works locally or on paid servers)
+    // ----------------------------------------------------
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = process.env.SMTP_PORT || 587;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+
+    if (!smtpHost || !smtpUser || !smtpPass) {
+      console.error('[API SERVER] SMTP Credentials missing from environment.');
+      return res.status(500).json({ error: 'Server mailer setup not fully configured.' });
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: parseInt(smtpPort),
+      secure: smtpPort === '465',
+      auth: {
+        user: smtpUser,
+        pass: smtpPass
+      },
+      connectionTimeout: 5000,
+      greetingTimeout: 5000,
+      socketTimeout: 5000
     });
 
-    // Send thank-you auto-responder to the sender
-    await transporter.sendMail({
-      from: `"Virag Nandgaonkar" <${smtpUser}>`,
-      to: email,
-      subject: `✔ Connection Acknowledged - Virag Nandgaonkar`,
-      html: clientHtml
-    });
+    try {
+      console.log('[API SERVER] Sending email notification via Nodemailer SMTP...');
+      await transporter.sendMail({
+        from: `"${name} (Portfolio)" <${smtpUser}>`,
+        to: receiverEmail,
+        replyTo: email,
+        subject: `📧 Portfolio Message from ${name}`,
+        html: adminHtml
+      });
 
-    console.log(`Email transmissions succeeded from: ${email}`);
-    res.json({ success: true, message: 'Message sent and auto-reply delivered successfully!' });
-  } catch (error) {
-    console.error('Nodemailer transmission failure:', error);
-    res.status(500).json({ error: 'Mail transmission link failed. Please check server logs.' });
+      // Try client auto-responder
+      try {
+        await transporter.sendMail({
+          from: `"Virag Nandgaonkar" <${smtpUser}>`,
+          to: email,
+          subject: `✔ Connection Acknowledged - Virag Nandgaonkar`,
+          html: clientHtml
+        });
+      } catch (clientErr) {
+        console.warn('[API SERVER] SMTP auto-responder failed:', clientErr.message);
+      }
+
+      console.log(`[API SERVER] SMTP transmission successful for: ${email}`);
+      return res.json({ success: true, message: 'Message sent successfully!' });
+    } catch (error) {
+      console.error('[API SERVER] Nodemailer SMTP error:', error);
+      return res.status(500).json({ error: 'Mail transmission link failed. Please check server logs.' });
+    }
   }
 });
 
