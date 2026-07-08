@@ -17,7 +17,7 @@ export default function Hero({ onSummonShell }) {
   useEffect(() => {
     let timer;
     const currentFullRole = ROLES[roleIndex];
-    
+
     if (isDeleting) {
       timer = setTimeout(() => {
         setDisplayedRole(prev => prev.slice(0, -1));
@@ -48,7 +48,7 @@ export default function Hero({ onSummonShell }) {
       <div className="bg-particle w-80 h-80 bg-cyber-cyan bottom-10 right-10 animate-float-medium" />
 
       <div className="max-w-6xl w-full grid grid-cols-1 md:grid-cols-12 gap-12 items-center relative z-10">
-        
+
         {/* Bio Text Column */}
         <div className="md:col-span-7 text-left space-y-6 flex flex-col justify-center">
           <motion.div
@@ -127,10 +127,10 @@ export default function Hero({ onSummonShell }) {
             {/* Holographic Glowing Frames */}
             <div className="absolute inset-0 rounded-full border-2 border-dashed border-cyber-pink/40 animate-spin-slow group-hover:border-cyber-pink transition-colors" />
             <div className="absolute inset-2 rounded-full border border-cyber-cyan/30 animate-spin-[20s] linear infinite group-hover:border-cyber-cyan transition-colors" />
-            
+
             <div className="absolute inset-4 rounded-full overflow-hidden border-2 border-cyber-purple/50 bg-cyber-dark/80 shadow-neon-purple flex items-center justify-center">
               <img
-                src="/Virag.jpeg"
+                src="/Virag.png"
                 alt="Virag Nandgaonkar"
                 className="w-full h-full object-cover grayscale contrast-[1.1] hover:grayscale-0 transition-all duration-700 hover:scale-105"
                 onError={(e) => {
@@ -138,7 +138,7 @@ export default function Hero({ onSummonShell }) {
                   e.target.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop';
                 }}
               />
-              
+
               {/* High-tech Scanning CRT Lines */}
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyber-cyan/10 to-transparent animate-pulse pointer-events-none" />
             </div>
