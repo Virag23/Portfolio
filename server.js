@@ -21,6 +21,11 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ONLINE', timestamp: new Date() });
 });
 
+// Root route to handle health monitors targeting the domain root
+app.get('/', (req, res) => {
+  res.json({ status: 'ONLINE', message: "Welcome to Virag Nandgaonkar's Portfolio API Server", timestamp: new Date() });
+});
+
 // Contact Route
 app.post('/api/contact', async (req, res) => {
   const { name, email, message } = req.body;
