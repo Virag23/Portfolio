@@ -9,8 +9,37 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Enable CORS so the React frontend can contact this server
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5000'
+];
+
+if (process.env.CLIENT_URL) {
+  try {
+    const originUrl = new URL(process.env.CLIENT_URL).origin;
+    allowedOrigins.push(originUrl);
+    allowedOrigins.push(process.env.CLIENT_URL.replace(/\/$/, ''));
+  } catch (e) {
+    allowedOrigins.push(process.env.CLIENT_URL.replace(/\/$/, ''));
+  }
+}
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+    if (!origin) return callback(null, true);
+    
+    const isAllowed = allowedOrigins.some(allowed => 
+      allowed.toLowerCase() === origin.toLowerCase()
+    );
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked request from origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 
